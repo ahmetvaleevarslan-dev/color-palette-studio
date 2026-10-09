@@ -105,23 +105,20 @@ footer{padding:60px 0 30px;color:#657187;text-align:center;font-size:13px}
  .gradient-controls{grid-template-columns:1fr}.saved{grid-template-columns:1fr}
 }
 
-/* =========================
-   MOBILE ADAPTATION
-   ========================= */
+/* =========================================================
+   FULL RESPONSIVE LAYOUT
+   ========================================================= */
 
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
+html, body {
+  max-width: 100%;
   overflow-x: hidden;
 }
 
-button, input, select {
+img, svg, video, canvas {
+  max-width: 100%;
+}
+
+button, input, select, textarea {
   font: inherit;
 }
 
@@ -129,6 +126,18 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
   touch-action: manipulation;
 }
 
+/* TABLET */
+@media (max-width: 1024px) {
+  .wrap {
+    width: min(calc(100% - 32px), 960px);
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 64px);
+  }
+}
+
+/* PHONE */
 @media (max-width: 768px) {
   body {
     min-width: 0;
@@ -136,17 +145,31 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
   }
 
   .wrap {
-    width: min(100% - 24px, 680px);
-    margin-inline: auto;
+    width: calc(100% - 24px);
+    max-width: none;
   }
 
+  /*
+    Header is NOT fixed/sticky.
+    It remains in normal document flow, so it cannot cover the page.
+  */
   header {
-    padding: 14px 0;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100%;
+    z-index: 10;
+    background: rgba(8, 11, 18, .96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   header .wrap {
-    gap: 12px;
-    align-items: center;
+    width: calc(100% - 24px);
+    min-width: 0;
+    gap: 10px;
+    padding: 11px 0;
   }
 
   .logo {
@@ -154,12 +177,19 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
     white-space: nowrap;
   }
 
+  /*
+    Navigation gets a single horizontal scroll row.
+    This prevents the header from becoming huge on phones.
+  */
   nav {
     width: 100%;
-    overflow-x: auto;
+    min-width: 0;
     display: flex;
-    gap: 8px;
-    padding-bottom: 3px;
+    flex-wrap: nowrap;
+    gap: 7px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0 5px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
@@ -168,69 +198,68 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
     display: none;
   }
 
-  nav button, .tab {
+  nav button, nav a, .tab {
     flex: 0 0 auto;
-    min-height: 42px;
-    padding: 10px 14px;
+    min-height: 40px;
+    padding: 9px 13px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .hero {
-    padding: 36px 0 24px;
+    padding: 28px 0 22px;
   }
 
   .hero h1 {
-    font-size: clamp(30px, 9vw, 46px);
-    line-height: 1.04;
-    letter-spacing: -1.5px;
+    max-width: 100%;
+    font-size: clamp(30px, 9vw, 44px);
+    line-height: 1.06;
+    letter-spacing: -1.2px;
+    overflow-wrap: anywhere;
   }
 
   .hero p {
+    max-width: 100%;
     font-size: 15px;
     line-height: 1.55;
   }
 
-  input, select {
+  input, select, textarea {
+    max-width: 100%;
     min-height: 46px;
     font-size: 16px;
   }
 
-  .search input {
-    width: 100%;
-  }
-
-  .palette-grid, .palettes, .grid, .cards {
+  .palette-grid, .palettes, .grid, .cards,
+  .picker-layout, .picker-grid, .gradient-layout, .content-grid {
     grid-template-columns: 1fr !important;
-  }
-
-  .palette-card {
-    width: 100%;
   }
 
   .colors {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px;
+    gap: 9px;
   }
 
   .color {
-    min-height: 76px;
+    min-width: 0;
+    min-height: 72px;
     border-radius: 14px;
   }
 
   .color span {
     font-size: 12px;
+    overflow-wrap: anywhere;
   }
 
   .section, .panel, .card {
-    padding: 16px;
+    min-width: 0;
+    padding: 15px;
     border-radius: 18px;
   }
 
-  .picker-layout, .picker-grid, .gradient-layout, .content-grid {
-    grid-template-columns: 1fr !important;
-  }
-
   #bigPreview {
-    min-height: 180px;
+    width: 100%;
+    min-height: 170px;
     border-radius: 18px;
   }
 
@@ -239,11 +268,12 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
   }
 
   .format {
-    min-height: 58px;
+    min-height: 56px;
   }
 
   .gradient-preview, #gradientBox {
-    min-height: 190px;
+    width: 100%;
+    min-height: 180px;
     border-radius: 18px;
   }
 
@@ -255,33 +285,39 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
     width: 100%;
   }
 
+  #searchResult {
+    width: 100%;
+    overflow-wrap: anywhere;
+  }
+
   .modal {
-    padding: 12px;
+    padding: 10px;
     align-items: flex-end;
   }
 
   .modal-content, .modal-box {
     width: 100%;
     max-width: none;
-    max-height: 88vh;
+    max-height: 90dvh;
     overflow-y: auto;
     border-radius: 22px 22px 14px 14px;
-    padding: 18px;
+    padding: 17px;
   }
 
   #modalFormats {
     grid-template-columns: 1fr !important;
   }
 
-  .modal-format, .modal-content button {
+  .modal-content button, .modal-format {
     min-height: 48px;
   }
 
   .toast {
     left: 12px;
     right: 12px;
-    bottom: max(14px, env(safe-area-inset-bottom));
+    bottom: max(12px, env(safe-area-inset-bottom));
     width: auto;
+    max-width: none;
     text-align: center;
   }
 
@@ -290,21 +326,37 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
   }
 }
 
+/* SMALL PHONES */
 @media (max-width: 430px) {
   .wrap {
-    width: min(100% - 18px, 680px);
+    width: calc(100% - 18px);
+  }
+
+  header .wrap {
+    width: calc(100% - 18px);
+    padding: 9px 0;
   }
 
   .logo {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  nav button, nav a, .tab {
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 12px;
   }
 
   .hero {
-    padding-top: 28px;
+    padding-top: 24px;
   }
 
   .hero h1 {
-    font-size: 32px;
+    font-size: 31px;
+  }
+
+  .hero p {
+    font-size: 14px;
   }
 
   .colors {
@@ -312,7 +364,7 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
   }
 
   .color {
-    min-height: 68px;
+    min-height: 64px;
   }
 
   .color span {
@@ -324,7 +376,26 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
   }
 
   #bigPreview, .gradient-preview, #gradientBox {
-    min-height: 160px;
+    min-height: 155px;
+  }
+}
+
+/* VERY SMALL PHONES */
+@media (max-width: 360px) {
+  .wrap {
+    width: calc(100% - 14px);
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  nav {
+    gap: 5px;
+  }
+
+  nav button, nav a, .tab {
+    padding-inline: 9px;
   }
 }
 
@@ -337,29 +408,9 @@ button, .color, .tab, .palette-card, .format, .save-btn, .copy-btn {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: .01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-
-/* Fixed mobile header */
-@media (max-width: 768px) {
-  header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    z-index: 1000;
-    background: rgba(8, 11, 18, 0.92);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-
-  body {
-    padding-top: 70px;
   }
 }
