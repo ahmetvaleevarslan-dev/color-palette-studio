@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Color Studio — палитры цветов</title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<header>
+<div class="container nav">
+  <div class="logo">COLOR<span>STUDIO</span></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="palettes">Палитры</button>
+    <button class="tab" data-tab="picker">Подбор цвета</button>
+    <button class="tab" data-tab="gradient">Градиенты</button>
+    <button class="tab" data-tab="saved">Избранное</button>
+  </div>
+</div>
+</header>
+
+<main class="container">
+<section class="hero">
+  <div class="eyebrow">01 / color toolkit</div>
+  <h1>Цвет, который<br><span class="gradient">работает на дизайн.</span></h1>
+  <p>Готовые палитры, подбор оттенка и конвертация между HEX, RGB, HSL и другими форматами. Нажми на любой цвет — его код сразу скопируется.</p>
+</section>
+
+<section id="palettes" class="panel active">
+  <div class="toolbar">
+    <div>
+      <h2>Готовые палитры</h2>
+      <div class="small" style="margin-top:5px">Ищи цвет по HEX, RGB, HSL или названию палитры</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input class="input" id="colorSearch" placeholder="Например: #20e58a или rgb(32,229,138)" style="min-width:260px">
+      <select id="paletteFilter">
+        <option value="all">Все палитры</option><option value="dark">Dark</option>
+        <option value="bright">Яркие</option><option value="nature">Природа</option>
+      </select>
+    </div>
+  </div>
+  <div id="searchResult" class="card" style="display:none;margin-bottom:18px"></div>
+  <div id="paletteList" class="palette-list"></div>
+</section>
+
+<section id="picker" class="panel">
+  <div class="toolbar"><h2>Подбор цвета</h2><span class="small">Выбери оттенок и получи все форматы</span></div>
+  <div class="picker-grid">
+    <div class="card"><input id="nativeColor" class="color-input" type="color" value="#63e6be"></div>
+    <div class="card">
+      <div id="bigPreview" class="big-preview"></div>
+      <div class="formats" id="formats"></div>
+      <button id="saveColor" class="btn copy-mini" style="margin-top:12px;width:100%">☆ Добавить в избранное</button>
+    </div>
+  </div>
+</section>
+
+<section id="gradient" class="panel">
+  <div class="toolbar"><h2>Генератор градиентов</h2><button id="copyGradient" class="copy-mini">Копировать CSS</button></div>
+  <div class="card">
+    <div id="gradientBox" class="gradient-box"></div>
+    <div class="gradient-controls">
+      <div class="stop"><input id="g1" type="color" value="#63e6be"><input class="input" id="g1text" value="#63e6be"></div>
+      <div class="stop"><input id="g2" type="color" value="#7c8cff"><input class="input" id="g2text" value="#7c8cff"></div>
+      <select id="angle"><option value="90">90°</option><option value="120" selected>120°</option><option value="180">180°</option><option value="45">45°</option></select>
+    </div>
+  </div>
+</section>
+
+<section id="saved" class="panel">
+  <div class="toolbar"><h2>Избранное</h2><button id="clearSaved" class="copy-mini">Очистить</button></div>
+  <div id="savedList" class="saved"></div>
+</section>
+</main>
+
+
+<div id="colorModal" class="color-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Выбери формат цвета</h3>
+      <button class="close-modal" id="closeModal">✕</button>
+    </div>
+    <div id="modalColor" class="modal-color"></div>
+    <div id="modalFormats" class="modal-formats"></div>
+  </div>
+</div>
+<div id="toast" class="toast">Скопировано ✓</div>
+<footer>COLORSTUDIO · Инструмент для веб-дизайна</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
