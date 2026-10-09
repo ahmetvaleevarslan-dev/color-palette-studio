@@ -13,6 +13,7 @@
     <a class="brand" href="index.html">COLOR<span>STUDIO</span></a>
     <nav>
       <a href="#features">Возможности</a>
+      <a href="#playground">Попробовать</a>
       <a href="#stack">Технологии</a>
       <a class="nav-app" href="app.html">Открыть приложение ↗</a>
     </nav>
@@ -53,6 +54,35 @@
 </section>
 
 <section class="marquee"><div><span>PALETTES</span><b>✦</b><span>COLOR LAB</span><b>✦</b><span>WCAG CONTRAST</span><b>✦</b><span>CSS GRADIENTS</span><b>✦</b><span>SUPABASE</span><b>✦</b><span>RESPONSIVE</span></div></section>
+
+<section id="playground" class="color-playground wrap">
+  <div class="playground-copy">
+    <div class="eyebrow"><span></span> LIVE COLOR PLAYGROUND</div>
+    <h2>Найди цвет,<br><em>который работает.</em></h2>
+    <p>Выбери любой оттенок и посмотри, как он будет выглядеть в интерфейсе. Никаких формул — только эксперимент.</p>
+    <div class="color-controls">
+      <label class="color-input-wrap"><input id="landingColor" type="color" value="#63e6be" aria-label="Выберите цвет"><span>Выбрать цвет</span></label>
+      <div class="hex-output"><span id="landingHex">#63E6BE</span><button id="copyLandingColor" type="button" aria-label="Скопировать HEX">⧉</button></div>
+    </div>
+    <div class="playground-actions">
+      <button class="btn primary" id="openColorStudio" type="button">Открыть в ColorStudio <b>→</b></button>
+      <span id="copyStatus" class="copy-status">HEX готов к копированию</span>
+    </div>
+  </div>
+  <div class="playground-demo" id="playgroundDemo">
+    <div class="demo-glow"></div>
+    <div class="demo-window">
+      <div class="demo-window-top"><span>LIVE PREVIEW</span><b id="demoHex">#63E6BE</b></div>
+      <div class="demo-content">
+        <span class="demo-label">YOUR COLOR</span>
+        <h3>Цвет может<br>говорить за тебя.</h3>
+        <p>Проверь его прямо сейчас на настоящем UI-примере.</p>
+        <button id="demoButton" type="button">Пример кнопки</button>
+      </div>
+      <div class="demo-mini-cards"><div></div><div></div><div></div></div>
+    </div>
+  </div>
+</section>
 
 <section id="features" class="section wrap">
   <div class="section-head"><div><div class="eyebrow">01 / FEATURES</div><h2>Всё необходимое<br>для работы с цветом.</h2></div><p>От простого выбора оттенка до полноценной цветовой лаборатории.</p></div>
