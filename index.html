@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Color Studio — палитры цветов</title>
 <link rel="stylesheet" href="style.css">
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -17,6 +17,13 @@
     <button class="tab" data-tab="picker">Подбор цвета</button>
     <button class="tab" data-tab="gradient">Градиенты</button>
     <button class="tab" data-tab="saved">Избранное</button>
+  </div>
+  <div class="auth-area">
+    <button id="authButton" class="auth-button">Войти</button>
+    <div id="userMenu" class="user-menu" hidden>
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutButton" class="auth-button secondary">Выйти</button>
+    </div>
   </div>
 </div>
 </header>
@@ -88,8 +95,42 @@
   </div>
 </div>
 <div id="toast" class="toast">Скопировано ✓</div>
+
+<div id="authModal" class="color-modal">
+  <div class="modal-card auth-card">
+    <div class="modal-head">
+      <div>
+        <div class="auth-kicker">COLORSTUDIO ACCOUNT</div>
+        <h3 id="authTitle">Вход</h3>
+      </div>
+      <button class="close-modal" id="closeAuthModal">✕</button>
+    </div>
+
+    <div class="auth-switch">
+      <button id="loginMode" class="auth-switch-btn active">Войти</button>
+      <button id="registerMode" class="auth-switch-btn">Регистрация</button>
+    </div>
+
+    <form id="authForm" class="auth-form">
+      <label>
+        <span>Email</span>
+        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+      </label>
+      <label>
+        <span>Пароль</span>
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 6 символов" minlength="6" required>
+      </label>
+      <button id="authSubmit" class="auth-submit" type="submit">Войти</button>
+      <p id="authMessage" class="auth-message" role="status"></p>
+    </form>
+
+    <div class="auth-note">Избранные цвета будут синхронизироваться между устройствами после входа.</div>
+  </div>
+</div>
+
 <footer>COLORSTUDIO · Инструмент для веб-дизайна</footer>
 
+<script src="config.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

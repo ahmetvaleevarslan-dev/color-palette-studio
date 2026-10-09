@@ -174,43 +174,279 @@ function colorDistance(a,b){
   const x=hexToRgb(a),y=hexToRgb(b);
   return Math.sqrt((x[0]-y[0])**2+(x[1]-y[1])**2+(x[2]-y[2])**2);
 }
+/* =========================
+   Supabase + authentication
+   ========================= */
+const SUPABASE_CONFIG = window.COLORSTUDIO_SUPABASE || {};
+const SUPABASE_READY = Boolean(
+  window.supabase &&
+  SUPABASE_CONFIG.url &&
+  SUPABASE_CONFIG.key &&
+  !SUPABASE_CONFIG.url.includes("YOUR_SUPABASE") &&
+  !SUPABASE_CONFIG.key.includes("YOUR_SUPABASE")
+);
+const supabaseClient = SUPABASE_READY
+  ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    })
+  : null;
+
+let currentUser = null;
+let authMode = "login";
+
 function getSavedColors() {
-  return JSON.parse(localStorage.getItem("savedColors") || "[]");
+  try {
+    return JSON.parse(localStorage.getItem("savedColors") || "[]");
+  } catch {
+    return [];
+  }
 }
 
 function saveSavedColors(colors) {
   localStorage.setItem("savedColors", JSON.stringify(colors));
 }
 
-function toggleFavoriteColor(hex) {
-  const saved = getSavedColors();
-  const index = saved.indexOf(hex);
+function setAuthMessage(message = "", type = "") {
+  const el = $("#authMessage");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `auth-message ${type}`.trim();
+}
 
-  if (index === -1) {
-    saved.push(hex);
-    toast("Добавлено в избранное ★");
+function openAuthModal(mode = "login") {
+  authMode = mode;
+  $("#authModal")?.classList.add("show");
+  updateAuthMode();
+  setAuthMessage("");
+  setTimeout(() => $("#authEmail")?.focus(), 50);
+}
+
+function closeAuthModal() {
+  $("#authModal")?.classList.remove("show");
+  $("#authForm")?.reset();
+  setAuthMessage("");
+}
+
+function updateAuthMode() {
+  const login = authMode === "login";
+  $("#authTitle").textContent = login ? "Вход" : "Регистрация";
+  $("#authSubmit").textContent = login ? "Войти" : "Создать аккаунт";
+  $("#authPassword").setAttribute("autocomplete", login ? "current-password" : "new-password");
+  $("#loginMode")?.classList.toggle("active", login);
+  $("#registerMode")?.classList.toggle("active", !login);
+}
+
+function updateAuthUI() {
+  const button = $("#authButton");
+  const menu = $("#userMenu");
+  const email = $("#userEmail");
+  if (!button || !menu) return;
+
+  if (currentUser) {
+    button.hidden = true;
+    menu.hidden = false;
+    email.textContent = currentUser.email || "Аккаунт";
   } else {
-    saved.splice(index, 1);
-    toast("Удалено из избранного");
+    button.hidden = false;
+    menu.hidden = true;
+    button.textContent = "Войти";
+  }
+}
+
+async function syncFavoritesFromCloud() {
+  if (!supabaseClient || !currentUser) return;
+
+  const { data, error } = await supabaseClient
+    .from("favorites")
+    .select("color")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    toast("Не удалось загрузить избранное");
+    return;
   }
 
-  saveSavedColors(saved);
-  updatePaletteStars();
+  const cloudColors = (data || []).map(row => row.color.toUpperCase());
+  const localColors = getSavedColors().map(c => c.toUpperCase());
+  const merged = [...new Set([...cloudColors, ...localColors])];
+
+  // Transfer local favorites to the account when the user signs in for the first time.
+  const missingInCloud = localColors.filter(color => !cloudColors.includes(color));
+  if (missingInCloud.length) {
+    const { error: insertError } = await supabaseClient
+      .from("favorites")
+      .insert(missingInCloud.map(color => ({ user_id: currentUser.id, color })));
+    if (insertError) console.error(insertError);
+  }
+
+  saveSavedColors(merged);
   renderSaved();
+  updatePaletteStars();
+}
+
+async function addFavoriteToCloud(hex) {
+  if (!supabaseClient || !currentUser) return true;
+  const { error } = await supabaseClient
+    .from("favorites")
+    .insert({ user_id: currentUser.id, color: hex.toUpperCase() });
+
+  if (error && error.code !== "23505") {
+    console.error(error);
+    toast("Не удалось сохранить цвет в облако");
+    return false;
+  }
+  return true;
+}
+
+async function removeFavoriteFromCloud(hex) {
+  if (!supabaseClient || !currentUser) return true;
+  const { error } = await supabaseClient
+    .from("favorites")
+    .delete()
+    .eq("user_id", currentUser.id)
+    .eq("color", hex.toUpperCase());
+
+  if (error) {
+    console.error(error);
+    toast("Не удалось удалить цвет из облака");
+    return false;
+  }
+  return true;
+}
+
+async function toggleFavoriteColor(hex) {
+  const normalized = hex.toUpperCase();
+  const saved = getSavedColors();
+  const index = saved.indexOf(normalized);
+
+  if (index === -1) {
+    saved.push(normalized);
+    saveSavedColors(saved);
+    updatePaletteStars();
+    renderSaved();
+    toast(currentUser ? "Добавлено и синхронизировано ★" : "Добавлено в избранное ★");
+
+    if (currentUser) await addFavoriteToCloud(normalized);
+  } else {
+    saved.splice(index, 1);
+    saveSavedColors(saved);
+    updatePaletteStars();
+    renderSaved();
+    toast("Удалено из избранного");
+
+    if (currentUser) await removeFavoriteFromCloud(normalized);
+  }
 }
 
 function updatePaletteStars() {
   const saved = getSavedColors();
-
   document.querySelectorAll("#paletteList .color-star").forEach(star => {
     const hex = star.dataset.star;
     const active = saved.includes(hex);
-
     star.textContent = active ? "★" : "☆";
     star.classList.toggle("is-favorite", active);
     star.title = active ? "Убрать из избранного" : "Добавить в избранное";
     star.setAttribute("aria-label", active ? "Убрать из избранного" : "Добавить в избранное");
   });
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+  if (!supabaseClient) {
+    setAuthMessage("Сначала подключи Supabase в config.js", "error");
+    return;
+  }
+
+  const email = $("#authEmail").value.trim();
+  const password = $("#authPassword").value;
+  const submit = $("#authSubmit");
+
+  submit.disabled = true;
+  setAuthMessage("Подключаемся…");
+
+  try {
+    let result;
+    if (authMode === "login") {
+      result = await supabaseClient.auth.signInWithPassword({ email, password });
+    } else {
+      result = await supabaseClient.auth.signUp({ email, password });
+    }
+
+    if (result.error) throw result.error;
+
+    if (authMode === "register" && !result.data.session) {
+      setAuthMessage("Аккаунт создан. Проверь почту и подтверди email, затем войди.", "success");
+      return;
+    }
+
+    closeAuthModal();
+  } catch (error) {
+    console.error(error);
+    setAuthMessage(error.message || "Не удалось выполнить операцию", "error");
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function initAuth() {
+  updateAuthUI();
+
+  if (!supabaseClient) {
+    console.info("Supabase is not configured yet. Local favorites remain available.");
+    return;
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+  currentUser = data.session?.user || null;
+  updateAuthUI();
+  if (currentUser) await syncFavoritesFromCloud();
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    updateAuthUI();
+    if (currentUser) await syncFavoritesFromCloud();
+    else renderSaved();
+  });
+}
+
+$("#authButton")?.addEventListener("click", () => openAuthModal("login"));
+$("#closeAuthModal")?.addEventListener("click", closeAuthModal);
+$("#loginMode")?.addEventListener("click", () => { authMode = "login"; updateAuthMode(); setAuthMessage(""); });
+$("#registerMode")?.addEventListener("click", () => { authMode = "register"; updateAuthMode(); setAuthMessage(""); });
+$("#authForm")?.addEventListener("submit", handleAuthSubmit);
+$("#logoutButton")?.addEventListener("click", async () => {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  toast("Вы вышли из аккаунта");
+});
+$("#authModal")?.addEventListener("click", event => {
+  if (event.target.id === "authModal") closeAuthModal();
+});
+
+async function removeFavoriteColor(hex) {
+  const next = getSavedColors().filter(c => c !== hex);
+  saveSavedColors(next);
+  renderSaved();
+  updatePaletteStars();
+  if (currentUser) await removeFavoriteFromCloud(hex);
+  toast("Удалено из избранного");
+}
+
+async function clearAllFavorites() {
+  saveSavedColors([]);
+  renderSaved();
+  updatePaletteStars();
+  if (supabaseClient && currentUser) {
+    const { error } = await supabaseClient
+      .from("favorites")
+      .delete()
+      .eq("user_id", currentUser.id);
+    if (error) console.error(error);
+  }
+  toast("Избранное очищено");
 }
 
 function renderPalettes() {
@@ -313,30 +549,26 @@ function setColor(hex){
 setColor("#63e6be");
 $("#nativeColor").oninput=e=>setColor(e.target.value);
 
-let saved=JSON.parse(localStorage.getItem("savedColors")||"[]");
 function renderSaved() {
-  const list = document.querySelector("#savedList");
+  const list = $("#savedList");
   if (!list) return;
 
-  const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
-
+  const saved = getSavedColors();
   if (!saved.length) {
     list.innerHTML = `
       <div class="empty">
         <strong>Избранных цветов пока нет</strong>
-        <span>Сохрани цвет из вкладки «Подбор цвета», чтобы он появился здесь.</span>
+        <span>${currentUser ? "Добавляй цвета — они будут доступны на других устройствах." : "Войди в аккаунт, чтобы синхронизировать избранное между устройствами."}</span>
       </div>`;
     return;
   }
 
   list.innerHTML = saved.map(hex => `
     <article class="saved-color-card">
-      <button class="saved-preview" type="button" data-saved-color="${hex}"
-              style="background:${hex}" title="Открыть форматы ${hex}">
-      </button>
+      <button class="saved-preview" type="button" data-saved-color="${hex}" style="background:${hex}" title="Открыть форматы ${hex}"></button>
       <div class="saved-info">
         <strong>${hex}</strong>
-        <span>Нажми на цвет, чтобы выбрать HEX, RGB, HSL или RGBA</span>
+        <span>${currentUser ? "Синхронизировано с аккаунтом" : "Локальное избранное · войди для синхронизации"}</span>
       </div>
       <button class="remove-saved" type="button" data-remove="${hex}" aria-label="Удалить ${hex}">×</button>
     </article>
@@ -350,17 +582,14 @@ function renderSaved() {
   });
 
   list.querySelectorAll("[data-remove]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const next = saved.filter(c => c !== btn.dataset.remove);
-      localStorage.setItem("savedColors", JSON.stringify(next));
-      renderSaved();
-      toast("Удалено из избранного");
-    });
+    btn.addEventListener("click", () => removeFavoriteColor(btn.dataset.remove));
   });
 }
-$("#saveColor").onclick=()=>{let c=$("#nativeColor").value.toUpperCase();if(!saved.includes(c))saved.push(c);localStorage.setItem("savedColors",JSON.stringify(saved));renderSaved();toast("Добавлено в избранное ☆")}
-$("#clearSaved").onclick=()=>{saved=[];localStorage.removeItem("savedColors");renderSaved()}
+
+$("#saveColor").onclick = () => toggleFavoriteColor($("#nativeColor").value.toUpperCase());
+$("#clearSaved").onclick = clearAllFavorites;
 renderSaved();
+initAuth();
 
 function updateGradient(){
  let a=$("#g1").value,b=$("#g2").value,angle=$("#angle").value;
