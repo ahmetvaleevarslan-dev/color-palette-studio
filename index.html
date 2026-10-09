@@ -16,6 +16,8 @@
     <button class="tab active" data-tab="palettes">Палитры</button>
     <button class="tab" data-tab="picker">Подбор цвета</button>
     <button class="tab" data-tab="gradient">Градиенты</button>
+    <button class="tab" data-tab="lab">Лаборатория</button>
+    <button class="tab" data-tab="myPalettes">Мои палитры</button>
     <button class="tab" data-tab="saved">Избранное</button>
   </div>
   <div class="auth-area">
@@ -95,6 +97,52 @@
       <select id="angle"><option value="90">90°</option><option value="120" selected>120°</option><option value="180">180°</option><option value="45">45°</option></select>
     </div>
   </div>
+</section>
+
+
+<section id="lab" class="panel">
+  <div class="toolbar"><div><h2>Лаборатория цвета</h2><div class="small" style="margin-top:5px">Генерация гармоничных палитр, контраст и извлечение цветов из изображения</div></div></div>
+  <div class="lab-grid">
+    <div class="card">
+      <div class="lab-head"><div><h3>Генератор палитры</h3><span>Выбери базовый цвет и тип гармонии</span></div><button id="randomBase" class="copy-mini">🎲 Случайный</button></div>
+      <div class="lab-controls">
+        <input id="generatorColor" type="color" value="#63e6be">
+        <input id="generatorHex" class="input" value="#63E6BE" maxlength="7">
+        <select id="harmonyType">
+          <option value="complementary">Комплементарная</option>
+          <option value="analogous" selected>Аналоговая</option>
+          <option value="triadic">Триадическая</option>
+          <option value="split">Split-complementary</option>
+          <option value="monochrome">Оттенки</option>
+        </select>
+        <button id="generatePalette" class="primary">✨ Сгенерировать</button>
+      </div>
+      <div id="generatedPalette" class="generated-palette"></div>
+      <div class="lab-actions"><button id="copyGeneratedCss" class="copy-mini">Копировать CSS</button><button id="saveGeneratedPalette" class="primary">💾 Сохранить палитру</button></div>
+    </div>
+
+    <div class="card">
+      <div class="lab-head"><div><h3>Проверка контрастности</h3><span>Проверка текста и фона по WCAG</span></div></div>
+      <div class="contrast-controls">
+        <label>Текст<input id="contrastText" type="color" value="#FFFFFF"></label>
+        <label>Фон<input id="contrastBg" type="color" value="#111722"></label>
+      </div>
+      <div id="contrastPreview" class="contrast-preview"><strong>Пример текста</strong><span>Так будет выглядеть сочетание цветов</span></div>
+      <div id="contrastResult" class="contrast-result"></div>
+    </div>
+
+    <div class="card image-lab-card">
+      <div class="lab-head"><div><h3>Палитра из изображения</h3><span>Загрузи изображение — ColorStudio найдёт основные цвета</span></div></div>
+      <label class="upload-zone" for="imageInput"><input id="imageInput" type="file" accept="image/*"><span>🖼️</span><strong>Нажми, чтобы выбрать изображение</strong><small>PNG, JPG, WEBP</small></label>
+      <canvas id="imageCanvas" hidden></canvas>
+      <div id="imagePalette" class="image-palette"></div>
+    </div>
+  </div>
+</section>
+
+<section id="myPalettes" class="panel">
+  <div class="toolbar"><div><h2>Мои палитры</h2><div class="small" style="margin-top:5px">Сохраняй собственные палитры в аккаунте и открывай их с любого устройства</div></div><button id="createPaletteFromCurrent" class="primary">+ Сохранить текущую</button></div>
+  <div id="myPalettesList" class="my-palettes-list"></div>
 </section>
 
 <section id="saved" class="panel">

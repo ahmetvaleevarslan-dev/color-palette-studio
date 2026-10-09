@@ -762,3 +762,94 @@ $("#g1").oninput=updateGradient;$("#g2").oninput=updateGradient;$("#angle").onch
 $("#g1text").onchange=e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value)){$("#g1").value=e.target.value;updateGradient()}}
 $("#g2text").onchange=e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value)){$("#g2").value=e.target.value;updateGradient()}}
 $("#copyGradient").onclick=()=>copy(`background: linear-gradient(${$("#angle").value}deg, ${$("#g1").value}, ${$("#g2").value});`);
+
+/* =========================
+   ColorStudio Pro tools
+   ========================= */
+function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360; s=clamp(s,0,100)/100; l=clamp(l,0,100)/100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r=0,g=0,b=0;
+  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+  return '#'+[r,g,b].map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function generatedColors(base,type){
+  const [r,g,b]=hexToRgb(base), [h,s,l]=rgbToHsl(r,g,b);
+  const specs={
+    complementary:[0,180,150,210,30],
+    analogous:[-40,-20,0,20,40],
+    triadic:[0,120,240,180,60],
+    split:[0,150,210,30,330],
+    monochrome:[0,0,0,0,0]
+  };
+  const offsets=specs[type]||specs.analogous;
+  if(type==='monochrome') return [18,30,42,54,66].map(delta=>hslToHex(h,s,clamp(l-delta+30,8,92)));
+  return offsets.map((o,i)=>hslToHex(h+o,clamp(s+(i===0?0:(i%2?5:-5)),18,100),clamp(l+(i===0?0:(i%2?10:-10)),12,88)));
+}
+function renderGeneratedPalette(colors){
+  const box=$('#generatedPalette'); if(!box)return;
+  box.innerHTML=colors.map(c=>`<button class="generated-color" data-generated="${c}" style="background:${c}" title="Открыть ${c}"><span>${c}</span></button>`).join('');
+  box.querySelectorAll('[data-generated]').forEach(b=>b.onclick=()=>{showColorModal(b.dataset.generated);setColor(b.dataset.generated)});
+}
+let generatedPalette=generatedColors('#63E6BE','analogous');
+function updateGenerator(){
+  let hex=parseColorInput($('#generatorHex')?.value||'');
+  if(!hex) hex=$('#generatorColor')?.value?.toUpperCase()||'#63E6BE';
+  $('#generatorColor').value=hex;
+  $('#generatorHex').value=hex;
+  generatedPalette=generatedColors(hex,$('#harmonyType').value);
+  renderGeneratedPalette(generatedPalette);
+}
+$('#generatorColor')?.addEventListener('input',e=>{ $('#generatorHex').value=e.target.value.toUpperCase(); updateGenerator(); });
+$('#generatorHex')?.addEventListener('change',updateGenerator);
+$('#harmonyType')?.addEventListener('change',updateGenerator);
+$('#generatePalette')?.addEventListener('click',updateGenerator);
+$('#randomBase')?.addEventListener('click',()=>{const hex='#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0').toUpperCase();$('#generatorColor').value=hex;$('#generatorHex').value=hex;updateGenerator()});
+$('#copyGeneratedCss')?.addEventListener('click',()=>copy(`:root {\n${generatedPalette.map((c,i)=>`  --color-${i+1}: ${c};`).join('\n')}\n}`));
+
+function relativeLuminance(hex){
+  return hexToRgb(hex).map(v=>v/255).map(v=>v<=.03928?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+[.2126,.7152,.0722][i]*v,0);
+}
+function contrastRatio(a,b){const l1=relativeLuminance(a),l2=relativeLuminance(b);return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)}
+function updateContrast(){
+  const fg=$('#contrastText').value.toUpperCase(), bg=$('#contrastBg').value.toUpperCase(), ratio=contrastRatio(fg,bg);
+  const r=ratio.toFixed(2); const aa=ratio>=4.5, aaLarge=ratio>=3, aaa=ratio>=7, aaaLarge=ratio>=4.5;
+  $('#contrastPreview').style.color=fg;$('#contrastPreview').style.background=bg;
+  $('#contrastResult').innerHTML=`<div class="contrast-score"><strong>${r}:1</strong><span>Контраст</span></div><div class="contrast-badges"><span class="${aa?'ok':''}">${aa?'✓':'×'} AA обычный текст</span><span class="${aaLarge?'ok':''}">${aaLarge?'✓':'×'} AA крупный текст</span><span class="${aaa?'ok':''}">${aaa?'✓':'×'} AAA обычный текст</span><span class="${aaaLarge?'ok':''}">${aaaLarge?'✓':'×'} AAA крупный текст</span></div>`;
+}
+$('#contrastText')?.addEventListener('input',updateContrast);$('#contrastBg')?.addEventListener('input',updateContrast);updateContrast();
+
+function extractImageColors(img){
+  const canvas=$('#imageCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const size=100; canvas.width=size;canvas.height=size;ctx.clearRect(0,0,size,size);ctx.drawImage(img,0,0,size,size);
+  const data=ctx.getImageData(0,0,size,size).data, buckets=new Map();
+  for(let i=0;i<data.length;i+=16){const a=data[i+3];if(a<160)continue;const r=data[i]>>4,g=data[i+1]>>4,b=data[i+2]>>4,key=`${r},${g},${b}`;buckets.set(key,(buckets.get(key)||0)+1)}
+  const colors=[...buckets.entries()].sort((a,b)=>b[1]-a[1]).slice(0,24).map(([key])=>{const [r,g,b]=key.split(',').map(n=>parseInt(n,10)*16+8);return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase()});
+  const unique=[];for(const c of colors){if(unique.every(x=>colorDistance(x,c)>35)){unique.push(c)}if(unique.length>=6)break}return unique;
+}
+$('#imageInput')?.addEventListener('change',e=>{const file=e.target.files?.[0];if(!file)return;const img=new Image();img.onload=()=>{const colors=extractImageColors(img);const box=$('#imagePalette');box.innerHTML=colors.map(c=>`<button class="generated-color" data-generated="${c}" style="background:${c}"><span>${c}</span></button>`).join('');box.querySelectorAll('[data-generated]').forEach(b=>b.onclick=()=>{toggleFavoriteColor(b.dataset.generated)});toast(`Найдено ${colors.length} основных цветов`)};img.src=URL.createObjectURL(file)});
+
+async function savePaletteToCloud(name,colors){
+  if(!currentUser){toast('Войдите в аккаунт, чтобы сохранять палитры');openAuthModal('login');return false}
+  if(!supabaseClient){toast('Supabase не подключён');return false}
+  const {error}=await supabaseClient.from('user_palettes').insert({user_id:currentUser.id,name,colors});
+  if(error){console.error(error);toast('Не удалось сохранить палитру');return false}
+  toast('Палитра сохранена ✓');renderMyPalettes();return true;
+}
+async function renderMyPalettes(){
+  const box=$('#myPalettesList');if(!box)return;
+  if(!currentUser){box.innerHTML=`<div class="empty saved-auth-empty"><div class="saved-lock">🎨</div><strong>Войди в аккаунт, чтобы сохранять свои палитры</strong><span>Твои палитры будут синхронизироваться между устройствами.</span><button id="myPalLogin" class="primary" type="button">Войти в аккаунт</button></div>`;$('#myPalLogin')?.addEventListener('click',()=>openAuthModal('login'));return}
+  if(!supabaseClient){box.innerHTML='<div class="empty">Supabase не подключён.</div>';return}
+  const {data,error}=await supabaseClient.from('user_palettes').select('id,name,colors,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  if(error){console.error(error);box.innerHTML='<div class="empty"><strong>Не удалось загрузить палитры</strong><span>Проверь таблицу user_palettes в Supabase.</span></div>';return}
+  if(!data?.length){box.innerHTML='<div class="empty"><strong>Своих палитр пока нет</strong><span>Создай палитру в Лаборатории и сохрани её.</span></div>';return}
+  box.innerHTML=data.map(p=>`<article class="my-palette-card"><div class="my-palette-head"><div><strong>${htmlEscape(p.name)}</strong><span>${p.colors.length} цветов</span></div><button class="remove-palette copy-mini" data-palette-id="${p.id}">Удалить</button></div><div class="mini-palette">${p.colors.map(c=>`<button class="mini-color" style="background:${c}" data-generated="${c}" title="${c}"></button>`).join('')}</div><div class="my-palette-actions"><button class="copy-mini" data-copy-palette="${p.id}">Копировать CSS</button></div></article>`).join('');
+  data.forEach(p=>{box.querySelector(`[data-copy-palette="${p.id}"]`)?.addEventListener('click',()=>copy(`:root {\n${p.colors.map((c,i)=>`  --color-${i+1}: ${c};`).join('\n')}\n}`));box.querySelector(`[data-palette-id="${p.id}"]`)?.addEventListener('click',async()=>{const {error}=await supabaseClient.from('user_palettes').delete().eq('id',p.id).eq('user_id',currentUser.id);if(error)toast('Не удалось удалить');else{toast('Палитра удалена');renderMyPalettes()}});});
+}
+$('#saveGeneratedPalette')?.addEventListener('click',()=>savePaletteToCloud(`Моя палитра · ${new Date().toLocaleDateString('ru-RU')}`,generatedPalette));
+$('#createPaletteFromCurrent')?.addEventListener('click',()=>savePaletteToCloud(`Палитра · ${new Date().toLocaleDateString('ru-RU')}`,generatedPalette));
+
+// Refresh personal collections whenever the auth state changes.
+if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>{setTimeout(renderMyPalettes,0)});}
+renderGeneratedPalette(generatedPalette);renderMyPalettes();
