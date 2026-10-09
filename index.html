@@ -3,239 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Color Studio — палитры цветов</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="description" content="ColorStudio — современный toolkit для палитр, гармоний, контрастности и CSS-градиентов.">
+<title>ColorStudio — Color toolkit</title>
+<link rel="stylesheet" href="landing.css">
 </head>
 <body>
-
-<header>
-<div class="container nav">
-  <div class="logo">COLOR<span>STUDIO</span></div>
-  <div class="tabs">
-    <button class="tab active" data-tab="palettes">Палитры</button>
-    <button class="tab" data-tab="picker">Подбор цвета</button>
-    <button class="tab" data-tab="gradient">Градиенты</button>
-    <button class="tab" data-tab="lab">Лаборатория</button>
-    <button class="tab" data-tab="myPalettes">Мои палитры</button>
-    <button class="tab" data-tab="saved">Избранное</button>
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="index.html">COLOR<span>STUDIO</span></a>
+    <nav>
+      <a href="#features">Возможности</a>
+      <a href="#stack">Технологии</a>
+      <a class="nav-app" href="app.html">Открыть приложение ↗</a>
+    </nav>
   </div>
-  <div class="auth-area">
-    <button id="authButton" class="auth-button">Войти</button>
-    <div id="userMenu" class="user-menu" hidden>
-      <button id="profileButton" class="profile-button" type="button" aria-expanded="false" aria-controls="profileDropdown">
-        <span id="userAvatar" class="user-avatar">A</span>
-        <span class="profile-meta">
-          <span class="profile-label">Аккаунт</span>
-          <span id="userEmail" class="user-email"></span>
-        </span>
-        <span class="profile-chevron">⌄</span>
-      </button>
-      <div id="profileDropdown" class="profile-dropdown" hidden>
-        <div class="profile-top">
-          <span id="profileAvatarLarge" class="profile-avatar-large">A</span>
-          <div class="profile-copy">
-            <strong id="profileEmailLarge">Аккаунт</strong>
-            <span id="profileDisplayNameSmall">Ваш ColorStudio</span>
-          </div>
-        </div>
-        <div class="profile-stats">
-          <div><strong id="favoriteCount">0</strong><span>избранных цветов</span></div>
-        </div>
-        <button id="openProfileSettings" class="profile-settings-btn" type="button">Настройки профиля</button>
-        <button id="logoutButton" class="profile-logout" type="button">Выйти из аккаунта</button>
-      </div>
-    </div>
-  </div>
-</div>
 </header>
 
-<main class="container">
-<section class="hero">
-  <div class="eyebrow">01 / color toolkit</div>
-  <h1>Цвет, который<br><span class="gradient">работает на дизайн.</span></h1>
-  <p>Готовые палитры, подбор оттенка и конвертация между HEX, RGB, HSL и другими форматами. Нажми на любой цвет — его код сразу скопируется.</p>
-</section>
-
-<section id="palettes" class="panel active">
-  <div class="toolbar">
-    <div>
-      <h2>Готовые палитры</h2>
-      <div class="small" style="margin-top:5px">Ищи цвет по HEX, RGB, HSL или названию палитры</div>
+<main>
+<section class="hero wrap">
+  <div class="hero-copy">
+    <div class="eyebrow"><span></span> COLOR TOOLKIT · 2026</div>
+    <h1>Цвет, который<br><em>работает на дизайн.</em></h1>
+    <p>ColorStudio помогает быстро находить оттенки, собирать гармоничные палитры, проверять контраст и создавать CSS-градиенты — в одном интерфейсе.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="app.html">Запустить ColorStudio <b>→</b></a>
+      <a class="btn secondary" href="https://github.com/ahmetvaleevarslan-dev/color-palette-studio" target="_blank" rel="noopener">View on GitHub</a>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <input class="input" id="colorSearch" placeholder="Например: #20e58a или rgb(32,229,138)" style="min-width:260px">
-      <select id="paletteFilter">
-        <option value="all">Все палитры</option><option value="dark">Dark</option>
-        <option value="bright">Яркие</option><option value="nature">Природа</option>
-      </select>
+    <div class="stats">
+      <div><strong>24+</strong><span>палитры</span></div>
+      <div><strong>5</strong><span>типов гармоний</span></div>
+      <div><strong>WCAG</strong><span>контраст</span></div>
+      <div><strong>100%</strong><span>responsive</span></div>
     </div>
   </div>
-  <div id="searchResult" class="card" style="display:none;margin-bottom:18px"></div>
-  <div id="paletteList" class="palette-list"></div>
-</section>
-
-<section id="picker" class="panel">
-  <div class="toolbar"><h2>Подбор цвета</h2><span class="small">Выбери оттенок и получи все форматы</span></div>
-  <div class="picker-grid">
-    <div class="card"><input id="nativeColor" class="color-input" type="color" value="#63e6be"></div>
-    <div class="card">
-      <div id="bigPreview" class="big-preview"></div>
-      <div class="formats" id="formats"></div>
-      <button id="saveColor" class="btn copy-mini" style="margin-top:12px;width:100%">☆ Добавить в избранное</button>
-    </div>
-  </div>
-</section>
-
-<section id="gradient" class="panel">
-  <div class="toolbar"><h2>Генератор градиентов</h2><button id="copyGradient" class="copy-mini">Копировать CSS</button></div>
-  <div class="card">
-    <div id="gradientBox" class="gradient-box"></div>
-    <div class="gradient-controls">
-      <div class="stop"><input id="g1" type="color" value="#63e6be"><input class="input" id="g1text" value="#63e6be"></div>
-      <div class="stop"><input id="g2" type="color" value="#7c8cff"><input class="input" id="g2text" value="#7c8cff"></div>
-      <select id="angle"><option value="90">90°</option><option value="120" selected>120°</option><option value="180">180°</option><option value="45">45°</option></select>
-    </div>
-  </div>
-</section>
-
-
-<section id="lab" class="panel">
-  <div class="toolbar"><div><h2>Лаборатория цвета</h2><div class="small" style="margin-top:5px">Генерация гармоничных палитр, контраст и извлечение цветов из изображения</div></div></div>
-  <div class="lab-grid">
-    <div class="card">
-      <div class="lab-head"><div><h3>Генератор палитры</h3><span>Выбери базовый цвет и тип гармонии</span></div><button id="randomBase" class="copy-mini">🎲 Случайный</button></div>
-      <div class="lab-controls">
-        <input id="generatorColor" type="color" value="#63e6be">
-        <input id="generatorHex" class="input" value="#63E6BE" maxlength="7">
-        <select id="harmonyType">
-          <option value="complementary">Комплементарная</option>
-          <option value="analogous" selected>Аналоговая</option>
-          <option value="triadic">Триадическая</option>
-          <option value="split">Split-complementary</option>
-          <option value="monochrome">Оттенки</option>
-        </select>
-        <button id="generatePalette" class="primary">✨ Сгенерировать</button>
+  <div class="hero-art" aria-label="Preview of ColorStudio">
+    <div class="orb orb-a"></div><div class="orb orb-b"></div>
+    <div class="app-window">
+      <div class="window-bar"><i></i><i></i><i></i><span>colorstudio</span></div>
+      <div class="window-content">
+        <div class="mini-sidebar"><b>CS</b><span class="active"></span><span></span><span></span><span></span></div>
+        <div class="mini-main">
+          <div class="mini-top"><span>Готовые палитры</span><small>COLORSTUDIO</small></div>
+          <div class="palette-preview"><div style="background:#07111f"></div><div style="background:#113b4a"></div><div style="background:#0f766e"></div><div style="background:#63e6be"></div><div style="background:#b8ffe8"></div></div>
+          <div class="mini-cards"><div><span></span><b>#63E6BE</b></div><div><span></span><b>#7C8CFF</b></div><div><span></span><b>#111722</b></div></div>
+        </div>
       </div>
-      <div id="generatedPalette" class="generated-palette"></div>
-      <div class="lab-actions"><button id="copyGeneratedCss" class="copy-mini">Копировать CSS</button><button id="saveGeneratedPalette" class="primary">💾 Сохранить палитру</button></div>
-    </div>
-
-    <div class="card">
-      <div class="lab-head"><div><h3>Проверка контрастности</h3><span>Проверка текста и фона по WCAG</span></div></div>
-      <div class="contrast-controls">
-        <label>Текст<input id="contrastText" type="color" value="#FFFFFF"></label>
-        <label>Фон<input id="contrastBg" type="color" value="#111722"></label>
-      </div>
-      <div id="contrastPreview" class="contrast-preview"><strong>Пример текста</strong><span>Так будет выглядеть сочетание цветов</span></div>
-      <div id="contrastResult" class="contrast-result"></div>
-    </div>
-
-    <div class="card image-lab-card">
-      <div class="lab-head"><div><h3>Палитра из изображения</h3><span>Загрузи изображение — ColorStudio найдёт основные цвета</span></div></div>
-      <label class="upload-zone" for="imageInput"><input id="imageInput" type="file" accept="image/*"><span>🖼️</span><strong>Нажми, чтобы выбрать изображение</strong><small>PNG, JPG, WEBP</small></label>
-      <canvas id="imageCanvas" hidden></canvas>
-      <div id="imagePalette" class="image-palette"></div>
     </div>
   </div>
 </section>
 
-<section id="myPalettes" class="panel">
-  <div class="toolbar"><div><h2>Мои палитры</h2><div class="small" style="margin-top:5px">Сохраняй собственные палитры в аккаунте и открывай их с любого устройства</div></div><button id="createPaletteFromCurrent" class="primary">+ Сохранить текущую</button></div>
-  <div id="myPalettesList" class="my-palettes-list"></div>
+<section class="marquee"><div><span>PALETTES</span><b>✦</b><span>COLOR LAB</span><b>✦</b><span>WCAG CONTRAST</span><b>✦</b><span>CSS GRADIENTS</span><b>✦</b><span>SUPABASE</span><b>✦</b><span>RESPONSIVE</span></div></section>
+
+<section id="features" class="section wrap">
+  <div class="section-head"><div><div class="eyebrow">01 / FEATURES</div><h2>Всё необходимое<br>для работы с цветом.</h2></div><p>От простого выбора оттенка до полноценной цветовой лаборатории.</p></div>
+  <div class="feature-grid">
+    <article class="feature large"><div class="icon">◈</div><h3>Готовые палитры</h3><p>Большая коллекция цветовых сочетаний для интерфейсов, брендинга и экспериментов.</p><div class="swatches"><i></i><i></i><i></i><i></i><i></i></div></article>
+    <article class="feature"><div class="icon">✦</div><h3>Color Laboratory</h3><p>Аналоговые, комплементарные, триадические и другие гармонии.</p><div class="rings"><b></b><b></b><b></b></div></article>
+    <article class="feature"><div class="icon">Aa</div><h3>WCAG Contrast</h3><p>Проверяй читаемость текста и соответствие требованиям контрастности.</p><div class="contrast-demo"><strong>AA</strong><span>4.8 : 1</span></div></article>
+    <article class="feature"><div class="icon">⌁</div><h3>CSS Gradients</h3><p>Создавай градиенты и сразу копируй готовый CSS.</p><div class="gradient-demo"></div></article>
+    <article class="feature wide"><div><div class="icon">▣</div><h3>Image → Palette</h3><p>Загрузи изображение и получи набор основных цветов для дальнейшей работы.</p></div><div class="image-demo"><span></span><span></span><span></span><span></span><span></span></div></article>
+  </div>
 </section>
 
-<section id="saved" class="panel">
-  <div class="toolbar"><h2>Избранное</h2><button id="clearSaved" class="copy-mini">Очистить</button></div>
-  <div id="savedList" class="saved"></div>
-</section>
+<section class="showcase"><div class="wrap showcase-inner"><div><div class="eyebrow">02 / WORKFLOW</div><h2>От идеи<br><em>до готового цвета.</em></h2><p>Выбери оттенок, исследуй гармонию, проверь контраст и сохрани результат в своём аккаунте.</p><a class="text-link" href="app.html">Попробовать сейчас →</a></div><div class="steps"><div><b>01</b><span>Выбери</span><small>палитру или базовый цвет</small></div><div><b>02</b><span>Исследуй</span><small>гармонии и оттенки</small></div><div><b>03</b><span>Проверь</span><small>контраст и читаемость</small></div><div><b>04</b><span>Сохрани</span><small>свою палитру в аккаунте</small></div></div></div></section>
+
+<section id="stack" class="section wrap"><div class="section-head"><div><div class="eyebrow">03 / STACK</div><h2>Создано для<br>современного web.</h2></div><p>Чистая frontend-архитектура без тяжёлого build pipeline.</p></div><div class="tech-grid"><div><strong>HTML5</strong><span>Semantic structure</span></div><div><strong>CSS3</strong><span>Responsive UI</span></div><div><strong>JavaScript</strong><span>Interactive logic</span></div><div><strong>Supabase</strong><span>Auth + database</span></div><div><strong>GitHub Pages</strong><span>Deployment</span></div></div></section>
+
+<section class="cta wrap"><div><div class="eyebrow">04 / GET STARTED</div><h2>Готов поработать<br><em>с цветом?</em></h2></div><a class="btn primary" href="app.html">Открыть ColorStudio →</a></section>
 </main>
-
-
-<div id="colorModal" class="color-modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h3>Выбери формат цвета</h3>
-      <button class="close-modal" id="closeModal">✕</button>
-    </div>
-    <div id="modalColor" class="modal-color"></div>
-    <div id="modalFormats" class="modal-formats"></div>
-  </div>
-</div>
-
-<div id="profileModal" class="color-modal">
-  <div class="modal-card profile-card">
-    <div class="modal-head">
-      <div>
-        <div class="auth-kicker">YOUR COLORSTUDIO</div>
-        <h3>Профиль</h3>
-      </div>
-      <button class="close-modal" id="closeProfileModal">✕</button>
-    </div>
-
-    <div class="profile-hero">
-      <span id="profileModalAvatar" class="profile-avatar-xl">A</span>
-      <div>
-        <strong id="profileModalEmail">Аккаунт</strong>
-        <span id="profileModalCount">0 избранных цветов</span>
-      </div>
-    </div>
-
-    <form id="profileForm" class="auth-form profile-form">
-      <label>
-        <span>Отображаемое имя</span>
-        <input id="displayNameInput" type="text" maxlength="40" placeholder="Например, Арслан" autocomplete="nickname">
-      </label>
-      <label>
-        <span>Email</span>
-        <input id="profileEmailInput" type="email" disabled>
-      </label>
-      <label>
-        <span>Новый пароль <em>(необязательно)</em></span>
-        <input id="newPasswordInput" type="password" minlength="6" placeholder="Оставь пустым, если менять не нужно" autocomplete="new-password">
-      </label>
-      <button class="auth-submit" type="submit">Сохранить изменения</button>
-      <p id="profileMessage" class="auth-message" role="status"></p>
-    </form>
-  </div>
-</div>
-<div id="toast" class="toast">Скопировано ✓</div>
-
-<div id="authModal" class="color-modal">
-  <div class="modal-card auth-card">
-    <div class="modal-head">
-      <div>
-        <div class="auth-kicker">COLORSTUDIO ACCOUNT</div>
-        <h3 id="authTitle">Вход</h3>
-      </div>
-      <button class="close-modal" id="closeAuthModal">✕</button>
-    </div>
-
-    <div class="auth-switch">
-      <button id="loginMode" class="auth-switch-btn active">Войти</button>
-      <button id="registerMode" class="auth-switch-btn">Регистрация</button>
-    </div>
-
-    <form id="authForm" class="auth-form">
-      <label>
-        <span>Email</span>
-        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
-      </label>
-      <label>
-        <span>Пароль</span>
-        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 6 символов" minlength="6" required>
-      </label>
-      <button id="authSubmit" class="auth-submit" type="submit">Войти</button>
-      <p id="authMessage" class="auth-message" role="status"></p>
-    </form>
-
-    <div class="auth-note">Избранные цвета будут синхронизироваться между устройствами после входа.</div>
-  </div>
-</div>
-
-<footer>COLORSTUDIO · Инструмент для веб-дизайна</footer>
-
-<script src="config.js"></script>
-<script src="script.js"></script>
+<footer><div class="wrap footer-inner"><span>COLORSTUDIO · Color toolkit</span><span>Built with HTML · CSS · JavaScript · Supabase</span><a href="https://github.com/ahmetvaleevarslan-dev/color-palette-studio" target="_blank" rel="noopener">GitHub ↗</a></div></footer>
 </body>
 </html>
