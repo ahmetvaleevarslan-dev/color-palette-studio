@@ -21,8 +21,28 @@
   <div class="auth-area">
     <button id="authButton" class="auth-button">Войти</button>
     <div id="userMenu" class="user-menu" hidden>
-      <span id="userEmail" class="user-email"></span>
-      <button id="logoutButton" class="auth-button secondary">Выйти</button>
+      <button id="profileButton" class="profile-button" type="button" aria-expanded="false" aria-controls="profileDropdown">
+        <span id="userAvatar" class="user-avatar">A</span>
+        <span class="profile-meta">
+          <span class="profile-label">Аккаунт</span>
+          <span id="userEmail" class="user-email"></span>
+        </span>
+        <span class="profile-chevron">⌄</span>
+      </button>
+      <div id="profileDropdown" class="profile-dropdown" hidden>
+        <div class="profile-top">
+          <span id="profileAvatarLarge" class="profile-avatar-large">A</span>
+          <div class="profile-copy">
+            <strong id="profileEmailLarge">Аккаунт</strong>
+            <span id="profileDisplayNameSmall">Ваш ColorStudio</span>
+          </div>
+        </div>
+        <div class="profile-stats">
+          <div><strong id="favoriteCount">0</strong><span>избранных цветов</span></div>
+        </div>
+        <button id="openProfileSettings" class="profile-settings-btn" type="button">Настройки профиля</button>
+        <button id="logoutButton" class="profile-logout" type="button">Выйти из аккаунта</button>
+      </div>
     </div>
   </div>
 </div>
@@ -92,6 +112,43 @@
     </div>
     <div id="modalColor" class="modal-color"></div>
     <div id="modalFormats" class="modal-formats"></div>
+  </div>
+</div>
+
+<div id="profileModal" class="color-modal">
+  <div class="modal-card profile-card">
+    <div class="modal-head">
+      <div>
+        <div class="auth-kicker">YOUR COLORSTUDIO</div>
+        <h3>Профиль</h3>
+      </div>
+      <button class="close-modal" id="closeProfileModal">✕</button>
+    </div>
+
+    <div class="profile-hero">
+      <span id="profileModalAvatar" class="profile-avatar-xl">A</span>
+      <div>
+        <strong id="profileModalEmail">Аккаунт</strong>
+        <span id="profileModalCount">0 избранных цветов</span>
+      </div>
+    </div>
+
+    <form id="profileForm" class="auth-form profile-form">
+      <label>
+        <span>Отображаемое имя</span>
+        <input id="displayNameInput" type="text" maxlength="40" placeholder="Например, Арслан" autocomplete="nickname">
+      </label>
+      <label>
+        <span>Email</span>
+        <input id="profileEmailInput" type="email" disabled>
+      </label>
+      <label>
+        <span>Новый пароль <em>(необязательно)</em></span>
+        <input id="newPasswordInput" type="password" minlength="6" placeholder="Оставь пустым, если менять не нужно" autocomplete="new-password">
+      </label>
+      <button class="auth-submit" type="submit">Сохранить изменения</button>
+      <p id="profileMessage" class="auth-message" role="status"></p>
+    </form>
   </div>
 </div>
 <div id="toast" class="toast">Скопировано ✓</div>

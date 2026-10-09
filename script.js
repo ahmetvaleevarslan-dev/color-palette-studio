@@ -236,20 +236,49 @@ function updateAuthMode() {
   $("#registerMode")?.classList.toggle("active", !login);
 }
 
+function getUserDisplayName(user = currentUser) {
+  const name = user?.user_metadata?.display_name;
+  return typeof name === "string" && name.trim() ? name.trim() : "";
+}
+
+function getUserInitial(value = "A") {
+  const clean = String(value).trim();
+  return (clean[0] || "A").toUpperCase();
+}
+
+function updateFavoriteCount() {
+  const count = $("#favoriteCount");
+  if (count) count.textContent = getSavedColors().length;
+}
+
 function updateAuthUI() {
   const button = $("#authButton");
   const menu = $("#userMenu");
   const email = $("#userEmail");
+  const avatar = $("#userAvatar");
+  const largeAvatar = $("#profileAvatarLarge");
+  const largeEmail = $("#profileEmailLarge");
   if (!button || !menu) return;
 
   if (currentUser) {
+    const userEmail = currentUser.email || "Аккаунт";
+    const displayName = getUserDisplayName();
+    const identity = displayName || userEmail;
+    const initial = getUserInitial(identity);
     button.hidden = true;
     menu.hidden = false;
-    email.textContent = currentUser.email || "Аккаунт";
+    if (email) email.textContent = displayName || userEmail;
+    if (avatar) avatar.textContent = initial;
+    if (largeAvatar) largeAvatar.textContent = initial;
+    if (largeEmail) largeEmail.textContent = displayName || userEmail;
+    $("#profileDisplayNameSmall")?.replaceChildren(document.createTextNode(displayName ? userEmail : "Ваш ColorStudio"));
+    updateFavoriteCount();
   } else {
     button.hidden = false;
     menu.hidden = true;
     button.textContent = "Войти";
+    if (avatar) avatar.textContent = "A";
+    if (largeAvatar) largeAvatar.textContent = "A";
   }
 }
 
@@ -282,6 +311,7 @@ async function syncFavoritesFromCloud() {
   }
 
   saveSavedColors(merged);
+  updateFavoriteCount();
   renderSaved();
   updatePaletteStars();
 }
@@ -324,6 +354,7 @@ async function toggleFavoriteColor(hex) {
   if (index === -1) {
     saved.push(normalized);
     saveSavedColors(saved);
+    updateFavoriteCount();
     updatePaletteStars();
     renderSaved();
     toast(currentUser ? "Добавлено и синхронизировано ★" : "Добавлено в избранное ★");
@@ -332,6 +363,7 @@ async function toggleFavoriteColor(hex) {
   } else {
     saved.splice(index, 1);
     saveSavedColors(saved);
+    updateFavoriteCount();
     updatePaletteStars();
     renderSaved();
     toast("Удалено из избранного");
@@ -390,6 +422,68 @@ async function handleAuthSubmit(event) {
   }
 }
 
+function openProfileModal() {
+  if (!currentUser) return;
+  $("#profileDropdown")?.setAttribute("hidden", "");
+  $("#profileButton")?.setAttribute("aria-expanded", "false");
+
+  const displayName = getUserDisplayName();
+  const email = currentUser.email || "";
+  const identity = displayName || email || "A";
+  $("#displayNameInput").value = displayName;
+  $("#profileEmailInput").value = email;
+  $("#profileModalEmail").textContent = displayName || email || "Аккаунт";
+  $("#profileModalCount").textContent = `${getSavedColors().length} избранных цветов`;
+  $("#profileModalAvatar").textContent = getUserInitial(identity);
+  $("#newPasswordInput").value = "";
+  setProfileMessage("");
+  $("#profileModal")?.classList.add("show");
+}
+
+function closeProfileModal() {
+  $("#profileModal")?.classList.remove("show");
+  setProfileMessage("");
+}
+
+function setProfileMessage(message, type = "") {
+  const el = $("#profileMessage");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `auth-message${type ? ` ${type}` : ""}`;
+}
+
+async function handleProfileSubmit(event) {
+  event.preventDefault();
+  if (!supabaseClient || !currentUser) return;
+
+  const displayName = $("#displayNameInput").value.trim();
+  const newPassword = $("#newPasswordInput").value;
+  const submit = event.currentTarget.querySelector("button[type=submit]");
+  submit.disabled = true;
+  setProfileMessage("Сохраняем изменения…");
+
+  try {
+    const updates = { data: { ...currentUser.user_metadata, display_name: displayName } };
+    if (newPassword) updates.password = newPassword;
+
+    const { data, error } = await supabaseClient.auth.updateUser(updates);
+    if (error) throw error;
+
+    currentUser = data.user || currentUser;
+    updateAuthUI();
+    $("#profileModalEmail").textContent = displayName || currentUser.email || "Аккаунт";
+    $("#profileModalAvatar").textContent = getUserInitial(displayName || currentUser.email || "A");
+    $("#newPasswordInput").value = "";
+    setProfileMessage("Профиль сохранён ✓", "success");
+    toast("Профиль обновлён ✓");
+  } catch (error) {
+    console.error(error);
+    setProfileMessage(error.message || "Не удалось сохранить изменения", "error");
+  } finally {
+    submit.disabled = false;
+  }
+}
+
 async function initAuth() {
   updateAuthUI();
 
@@ -411,12 +505,42 @@ async function initAuth() {
   });
 }
 
+$("#profileButton")?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  const dropdown = $("#profileDropdown");
+  const button = $("#profileButton");
+  if (!dropdown || !button) return;
+  const isOpen = !dropdown.hidden;
+  dropdown.hidden = isOpen;
+  button.setAttribute("aria-expanded", String(!isOpen));
+});
+
+document.addEventListener("click", (event) => {
+  const menu = $("#userMenu");
+  const dropdown = $("#profileDropdown");
+  const button = $("#profileButton");
+  if (!menu || !dropdown || !button) return;
+  if (!menu.contains(event.target)) {
+    dropdown.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+  }
+});
+
+$("#openProfileSettings")?.addEventListener("click", openProfileModal);
+$("#closeProfileModal")?.addEventListener("click", closeProfileModal);
+$("#profileForm")?.addEventListener("submit", handleProfileSubmit);
+$("#profileModal")?.addEventListener("click", event => {
+  if (event.target.id === "profileModal") closeProfileModal();
+});
+
 $("#authButton")?.addEventListener("click", () => openAuthModal("login"));
 $("#closeAuthModal")?.addEventListener("click", closeAuthModal);
 $("#loginMode")?.addEventListener("click", () => { authMode = "login"; updateAuthMode(); setAuthMessage(""); });
 $("#registerMode")?.addEventListener("click", () => { authMode = "register"; updateAuthMode(); setAuthMessage(""); });
 $("#authForm")?.addEventListener("submit", handleAuthSubmit);
 $("#logoutButton")?.addEventListener("click", async () => {
+  $("#profileDropdown")?.setAttribute("hidden", "");
+  $("#profileButton")?.setAttribute("aria-expanded", "false");
   if (supabaseClient) await supabaseClient.auth.signOut();
   currentUser = null;
   updateAuthUI();
@@ -429,6 +553,7 @@ $("#authModal")?.addEventListener("click", event => {
 async function removeFavoriteColor(hex) {
   const next = getSavedColors().filter(c => c !== hex);
   saveSavedColors(next);
+  updateFavoriteCount();
   renderSaved();
   updatePaletteStars();
   if (currentUser) await removeFavoriteFromCloud(hex);
@@ -437,6 +562,7 @@ async function removeFavoriteColor(hex) {
 
 async function clearAllFavorites() {
   saveSavedColors([]);
+  updateFavoriteCount();
   renderSaved();
   updatePaletteStars();
   if (supabaseClient && currentUser) {
@@ -554,6 +680,7 @@ function renderSaved() {
   if (!list) return;
 
   const saved = getSavedColors();
+  updateFavoriteCount();
   if (!saved.length) {
     list.innerHTML = `
       <div class="empty">
