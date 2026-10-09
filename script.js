@@ -277,8 +277,14 @@ function updateAuthUI() {
     button.hidden = false;
     menu.hidden = true;
     button.textContent = "Войти";
+    if (email) email.textContent = "";
     if (avatar) avatar.textContent = "A";
     if (largeAvatar) largeAvatar.textContent = "A";
+    if (largeEmail) largeEmail.textContent = "Аккаунт";
+    $("#profileDisplayNameSmall")?.replaceChildren(document.createTextNode("Ваш ColorStudio"));
+    $("#favoriteCount") && ($("#favoriteCount").textContent = "0");
+    $("#profileDropdown")?.setAttribute("hidden", "");
+    $("#profileButton")?.setAttribute("aria-expanded", "false");
   }
 }
 
@@ -347,6 +353,12 @@ async function removeFavoriteFromCloud(hex) {
 }
 
 async function toggleFavoriteColor(hex) {
+  if (!currentUser) {
+    toast("Войдите в аккаунт, чтобы добавлять цвета в избранное");
+    openAuthModal("login");
+    return;
+  }
+
   const normalized = hex.toUpperCase();
   const saved = getSavedColors();
   const index = saved.indexOf(normalized);
@@ -373,7 +385,7 @@ async function toggleFavoriteColor(hex) {
 }
 
 function updatePaletteStars() {
-  const saved = getSavedColors();
+  const saved = currentUser ? getSavedColors() : [];
   document.querySelectorAll("#paletteList .color-star").forEach(star => {
     const hex = star.dataset.star;
     const active = saved.includes(hex);
@@ -679,13 +691,28 @@ function renderSaved() {
   const list = $("#savedList");
   if (!list) return;
 
+  if (!currentUser) {
+    list.innerHTML = `
+      <div class="empty saved-auth-empty">
+        <div class="saved-lock">🔒</div>
+        <strong>Войди в аккаунт, чтобы использовать избранное</strong>
+        <span>После входа ты сможешь добавлять цвета в избранное и получать к ним доступ с любого устройства.</span>
+        <button id="savedLoginButton" class="primary" type="button">Войти в аккаунт</button>
+      </div>`;
+    $("#clearSaved")?.setAttribute("hidden", "");
+    $("#savedLoginButton")?.addEventListener("click", () => openAuthModal("login"));
+    updateFavoriteCount();
+    return;
+  }
+
   const saved = getSavedColors();
   updateFavoriteCount();
+  $("#clearSaved")?.removeAttribute("hidden");
   if (!saved.length) {
     list.innerHTML = `
       <div class="empty">
         <strong>Избранных цветов пока нет</strong>
-        <span>${currentUser ? "Добавляй цвета — они будут доступны на других устройствах." : "Войди в аккаунт, чтобы синхронизировать избранное между устройствами."}</span>
+        <span>Добавляй цвета — они будут доступны на других устройствах.</span>
       </div>`;
     return;
   }
