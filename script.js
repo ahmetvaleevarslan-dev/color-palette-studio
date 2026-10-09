@@ -513,7 +513,11 @@ async function initAuth() {
     currentUser = session?.user || null;
     updateAuthUI();
     if (currentUser) await syncFavoritesFromCloud();
-    else renderSaved();
+    else {
+      renderSaved();
+      updateFavoriteCount();
+      updatePaletteStars();
+    }
   });
 }
 
@@ -555,7 +559,11 @@ $("#logoutButton")?.addEventListener("click", async () => {
   $("#profileButton")?.setAttribute("aria-expanded", "false");
   if (supabaseClient) await supabaseClient.auth.signOut();
   currentUser = null;
+  saveSavedColors([]);
   updateAuthUI();
+  renderSaved();
+  updateFavoriteCount();
+  updatePaletteStars();
   toast("Вы вышли из аккаунта");
 });
 $("#authModal")?.addEventListener("click", event => {
