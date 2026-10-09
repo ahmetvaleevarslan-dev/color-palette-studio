@@ -174,6 +174,45 @@ function colorDistance(a,b){
   const x=hexToRgb(a),y=hexToRgb(b);
   return Math.sqrt((x[0]-y[0])**2+(x[1]-y[1])**2+(x[2]-y[2])**2);
 }
+function getSavedColors() {
+  return JSON.parse(localStorage.getItem("savedColors") || "[]");
+}
+
+function saveSavedColors(colors) {
+  localStorage.setItem("savedColors", JSON.stringify(colors));
+}
+
+function toggleFavoriteColor(hex) {
+  const saved = getSavedColors();
+  const index = saved.indexOf(hex);
+
+  if (index === -1) {
+    saved.push(hex);
+    toast("Добавлено в избранное ★");
+  } else {
+    saved.splice(index, 1);
+    toast("Удалено из избранного");
+  }
+
+  saveSavedColors(saved);
+  updatePaletteStars();
+  renderSaved();
+}
+
+function updatePaletteStars() {
+  const saved = getSavedColors();
+
+  document.querySelectorAll("#paletteList .color-star").forEach(star => {
+    const hex = star.dataset.star;
+    const active = saved.includes(hex);
+
+    star.textContent = active ? "★" : "☆";
+    star.classList.toggle("is-favorite", active);
+    star.title = active ? "Убрать из избранного" : "Добавить в избранное";
+    star.setAttribute("aria-label", active ? "Убрать из избранного" : "Добавить в избранное");
+  });
+}
+
 function renderPalettes() {
   const filter = document.querySelector("#paletteFilter")?.value || "all";
   const searchInput = document.querySelector("#colorSearch");
@@ -216,6 +255,7 @@ function renderPalettes() {
           <button class="color" type="button" data-color="${c}" title="Открыть форматы ${c}"
                   style="background:${c}">
             <span>${c}</span>
+            <span class="color-star" data-star="${c}" title="Добавить в избранное" aria-label="Добавить в избранное">☆</span>
           </button>
         `).join("")}
       </div>
@@ -223,11 +263,21 @@ function renderPalettes() {
   `).join("");
 
   document.querySelectorAll("#paletteList .color").forEach(btn => {
-    btn.addEventListener("click", () => {
+    const star = btn.querySelector(".color-star");
+
+    btn.addEventListener("click", (event) => {
+      if (event.target.closest(".color-star")) return;
       showColorModal(btn.dataset.color);
       setColor(btn.dataset.color);
     });
+
+    star?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleFavoriteColor(btn.dataset.color);
+    });
   });
+
+  updatePaletteStars();
 }
 function htmlEscape(s){
  return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
